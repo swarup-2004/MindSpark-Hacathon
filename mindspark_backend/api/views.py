@@ -25,11 +25,44 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Bookmark.objects.filter(user=self.request.user)
     
+    def create(self, request, *args, **kwargs):
+
+        data = {
+            'user': request.user.id,
+            'article': request.data.get('article'),
+        }
+
+        serializer = self.get_serializer(data=data)
+        
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save(user=request.user)
+        
+        # Return the serialized data with a 201 response (created)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     def get_queryset(self):
         return Review.objects.filter(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+
+        data = { 
+            "user": request.user.id, 
+            "feedback": request.data.get("feedback"),
+            "rating": request.data.get("rating")
+        }
+
+        serializer = self.get_serializer(data=data)
+        
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save(user=request.user) 
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
     
 class ArticleViewSet(viewsets.ModelViewSet):
     serializer_class = ArticleSerializer

@@ -38,8 +38,9 @@ class Article(models.Model):
         return self.title
     
 class Bookmark(models.Model):
-    user = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
-    article = models.ForeignKey("Article", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user} - {self.article.title}"
@@ -52,9 +53,10 @@ class Review(models.Model):
         FOUR = 4, '4 - Good'
         FIVE = 5, '5 - Excellent'
     
-    user = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=Rating.choices)
     feedback = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user} - {self.rating}"

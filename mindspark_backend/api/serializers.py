@@ -28,9 +28,6 @@ class CustomUserSerializer(UserSerializer):
 
 
 
-
-
-
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
@@ -38,12 +35,15 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)  
-    article = ArticleSerializer(read_only=True)  
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
 
     class Meta:
         model = Bookmark
         fields = ['id', 'user', 'article']
+
+    
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
