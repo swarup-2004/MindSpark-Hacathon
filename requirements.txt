@@ -11,7 +11,9 @@ certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.3.2
 colorama==0.4.6
+contourpy==1.3.0
 cryptography==43.0.1
+cycler==0.12.1
 dataclasses-json==0.6.7
 defusedxml==0.8.0rc2
 Django==5.1.1
@@ -23,6 +25,7 @@ djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 djoser==2.2.3
 filelock==3.16.1
+fonttools==4.54.1
 frozenlist==1.4.1
 fsspec==2024.9.0
 greenlet==3.1.1
@@ -32,8 +35,10 @@ httpx==0.27.2
 huggingface-hub==0.25.1
 idna==3.10
 Jinja2==3.1.4
+joblib==1.4.2
 jsonpatch==1.33
 jsonpointer==3.0.0
+kiwisolver==1.4.7
 langchain==0.3.1
 langchain-community==0.3.1
 langchain-core==0.3.6
@@ -41,6 +46,7 @@ langchain-text-splitters==0.3.0
 langsmith==0.1.129
 MarkupSafe==2.1.5
 marshmallow==3.22.0
+matplotlib==3.9.2
 mpmath==1.3.0
 multidict==6.1.0
 mypy-extensions==1.0.0
@@ -57,6 +63,8 @@ pydantic==2.9.2
 pydantic-settings==2.5.2
 pydantic_core==2.23.4
 PyJWT==2.9.0
+pyparsing==3.2.0
+python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python3-openid==3.2.0
 PyYAML==6.0.2
@@ -64,7 +72,11 @@ regex==2024.9.11
 requests==2.32.3
 requests-oauthlib==2.0.0
 safetensors==0.4.5
+scikit-learn==1.5.2
+scipy==1.14.1
+sentence-transformers==3.2.0
 simplejwt==2.0.1
+six==1.16.0
 sniffio==1.3.1
 social-auth-app-django==5.4.2
 social-auth-core==4.5.4
@@ -73,6 +85,7 @@ SQLAlchemy==2.0.35
 sqlparse==0.5.1
 sympy==1.13.3
 tenacity==8.5.0
+threadpoolctl==3.5.0
 tokenizers==0.20.0
 torch==2.4.1
 tqdm==4.66.5
@@ -82,4 +95,5 @@ typing-inspect==0.9.0
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
+wordcloud==1.9.3
 yarl==1.13.0

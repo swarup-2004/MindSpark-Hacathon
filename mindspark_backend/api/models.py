@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -20,7 +21,43 @@ class CustomUser(AbstractUser):
     )
     def __str__(self):
         return self.first_name + self.last_name
+    
+class Article(models.Model):
+    source = models.CharField(max_length=255)
+    author = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    url = models.TextField()
+    url_to_image = models.TextField(blank=True, null=True)
+    published_at = models.DateField(_("Published Date"))
+    content = models.TextField()
+    category = models.CharField(max_length=255)
+    full_content = models.TextField()
 
+    def __str__(self):
+        return self.title
+    
+class Bookmark(models.Model):
+    user = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    article = models.ForeignKey("Article", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user} - {self.article.title}"
+
+class Review(models.Model):
+    class Rating(models.IntegerChoices):
+        ONE = 1, '1 - Very Poor'
+        TWO = 2, '2 - Poor'
+        THREE = 3, '3 - Average'
+        FOUR = 4, '4 - Good'
+        FIVE = 5, '5 - Excellent'
+    
+    user = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=Rating.choices)
+    feedback = models.TextField()
+
+    def __str__(self):
+        return f"{self.user} - {self.rating}"
     
 
 
