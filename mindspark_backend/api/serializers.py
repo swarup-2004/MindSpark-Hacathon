@@ -35,7 +35,7 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ['source', 'author', 'title', 'description', 'url', 'url_to_image', 
+        fields = ['id', 'source', 'author', 'title', 'description', 'url', 'url_to_image', 
                   'published_at', 'content', 'category', 'full_content']
 
     # Custom validation for full_content length
