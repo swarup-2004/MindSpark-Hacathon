@@ -50,10 +50,7 @@ def create_qdrant_collection():
     collection_name = "articles"
     # Check if the collection exists
 
-    client.create_collection(
-        collection_name=collection_name,
-        vectors_config={"size": 384, "distance": "Cosine"}  # Adjust the vector size as per your model
-    )
+    client.create_collection(collection_name=collection_name,vectors_config={"size": 384, "distance": "Cosine"})
     print(f"Collection '{collection_name}' created.")
   
 
