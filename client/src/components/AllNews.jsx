@@ -22,8 +22,7 @@ function AllNews() {
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    // Fetch from the Django API endpoint
-    fetch(`https://127.0.0.1:8000/api/articles?page=${page}&pageSize=${pageSize}`)
+    fetch(`https://news-aggregator-dusky.vercel.app/all-news?page=${page}&pageSize=${pageSize}`)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -31,10 +30,9 @@ function AllNews() {
         throw new Error('Network response was not ok');
       })
       .then(myJson => {
-        // Assuming your Django API returns articles in a similar structure
         if (myJson.success) {
-          setTotalResults(myJson.totalResults); // Adjust if your response structure is different
-          setData(myJson.articles); // Adjust if your response structure is different
+          setTotalResults(myJson.data.totalResults);
+          setData(myJson.data.articles);
         } else {
           setError(myJson.message || 'An error occurred');
         }
@@ -46,7 +44,7 @@ function AllNews() {
       .finally(() => {
         setIsLoading(false);
       });
-}, [page]);
+  }, [page]);
 
   return (
     <>
