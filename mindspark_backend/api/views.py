@@ -76,7 +76,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all().order_by('-published_at')
 
     filter_backends = [filters.SearchFilter]
-    search_fields = ['source', 'author', 'title', 'description', 'url', 'content', 'category', 'full_content']
+    search_fields = ['source', 'author', 'title', 'description', 'url', 'category', 'full_content']
     ordering_fields=['title']
     pagination_class = CustomPageNumberPagination
 
@@ -95,9 +95,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
                     'url': article_data['url'],
                     'url_to_image': article_data.get('urlToImage'),
                     'published_at': article_data['publishedAt'][:10],  # Trim timestamp to date
-                    'content': article_data['content'],
+                    # 'content': article_data['content'],
                     'category': 'Defense',
-                    'full_content': article_data.get('content', article_data.get('description'))
+                    'full_content': fetch_full_article(article_data['url']),
                 }
 
                 # Serialize the article data
@@ -141,7 +141,20 @@ class SentimentAnalysisAPIView(APIView):
         # Analyze sentiment
         sentiment = analyze_sentiment(article)
 
-        return Response({"sentiment": sentiment}, status=200)
+        positive = 0
+        negative = 0
+        count = 0
+
+        if sentiment:
+            for val in sentiment:
+                count += 1
+                print(val.get("label"))
+                if val.get("label") == "POSITIVE":
+                    positive += 1
+                else:
+                    negative += 1
+
+        return Response({"positive": positive / float(count), "negative": negative / float(count)}, status=200)
     
 
 
@@ -177,11 +190,13 @@ class RecommendationArticlesAPIView(APIView):
 
         similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = top_review.article.id)
 
-        if similar_article_ids:
+        if similar_articles:
 
             # Serialize the article data
             articles_data = ArticleSerializer(similar_articles, many=True).data
 
-        # Return the list of similar articles with complete information
-        return Response(articles_data, status=status.HTTP_200_OK)
+            # Return the list of similar articles with complete information
+            return Response(articles_data, status=status.HTTP_200_OK)
+        
+        return Response({"message": "Visit more articles"}, status=status.HTTP_200_OK)
    

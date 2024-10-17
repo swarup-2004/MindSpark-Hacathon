@@ -65,15 +65,12 @@ def transfer_articles_to_qdrant():
 
     for article in articles:
         # Convert the article content to a vector
-        vector = model.encode(article.content)
+        vector = model.encode(article.full_content)
         vectors.append(vector)
 
         # Prepare the payload (additional metadata you want to store)
         payload = {
             "id": article.id,
-            "title": article.title,
-            "author": article.author,
-            "description": article.description,
         }
         payloads.append(payload)
 

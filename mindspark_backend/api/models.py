@@ -30,7 +30,7 @@ class Article(models.Model):
     url = models.TextField()
     url_to_image = models.TextField(blank=True, null=True)
     published_at = models.DateField(_("Published Date"))
-    content = models.TextField()
+    # content = models.TextField()
     category = models.CharField(max_length=255)
     full_content = models.TextField()
     transferred = models.BooleanField(default=False)
