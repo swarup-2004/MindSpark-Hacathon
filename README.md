@@ -15,6 +15,7 @@ Ensure that you have the following installed:
 - **virtualenv** (optional but recommended)
 - **Docker** (for Qdrant)
 - **MySQL** (for the database)
+- **Node** (for the frontend)
 
 ### 1. Clone the Repository
 
@@ -127,6 +128,30 @@ Start the Django development server:
 
 ```bash
 python manage.py runserver
+```
+
+### 9. Setup frontend
+
+Navigate to the frontend directory, run the following command:
+
+```bash
+cd frontend
+```
+
+### 9. Install Dependencies
+
+Install the required packages:
+
+```bash
+npm i
+```
+
+### 8. Run the Server
+
+Start the React server:
+
+```bash
+npm run dev
 ```
 
 ## Additional Notes
