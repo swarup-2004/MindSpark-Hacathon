@@ -3,6 +3,9 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from django.contrib.auth import get_user_model
 from .models import *
 
+
+MAX_CONTENT_LENGTH = 65535
+
 User = get_user_model()
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -29,9 +32,17 @@ class CustomUserSerializer(UserSerializer):
 
 
 class ArticleSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Article
-        fields = ['id', 'source', 'author', 'title', 'description', 'url', 'url_to_image', 'published_at', 'content', 'category', 'full_content']
+        fields = ['source', 'author', 'title', 'description', 'url', 'url_to_image', 
+                  'published_at', 'content', 'category', 'full_content']
+
+    # Custom validation for full_content length
+    def validate_full_content(self, value):
+        if len(value) > MAX_CONTENT_LENGTH:
+            raise serializers.ValidationError("Content exceeds the maximum allowed length.")
+        return value
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
@@ -48,9 +59,10 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True) 
-    rating = serializers.ChoiceField(choices=Review.Rating.choices)  
+    rating = serializers.ChoiceField(choices=Review.Rating.choices) 
+    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
 
     class Meta:
         model = Review
-        fields = ['id', 'user', 'rating', 'feedback']
+        fields = ['id', 'user', 'rating', 'feedback', 'article']
 

@@ -33,6 +33,7 @@ class Article(models.Model):
     content = models.TextField()
     category = models.CharField(max_length=255)
     full_content = models.TextField()
+    transferred = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -54,8 +55,9 @@ class Review(models.Model):
         FIVE = 5, '5 - Excellent'
     
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=Rating.choices)
-    feedback = models.TextField()
+    feedback = models.TextField(default="")
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
