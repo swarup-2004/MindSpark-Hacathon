@@ -97,7 +97,7 @@ def find_similar_keyword(keyword):
 
 
 
-def query_similar_articles(article_id):
+def query_similar_articles(article_id, limit=30):
     
     try:
         # Fetch the article from the database using the provided article_id
@@ -110,7 +110,7 @@ def query_similar_articles(article_id):
         response = client.search(
             collection_name="articles",
             query_vector=vector.tolist(),   # Convert numpy array to list if needed
-            limit=30,  # Limit to 5 results
+            limit=limit,  # Limit to 5 results
             
         )
 

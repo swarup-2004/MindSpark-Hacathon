@@ -16,4 +16,5 @@ urlpatterns = [
     path('wordcloud/<int:article_id>/', WordCloudAPIView.as_view(), name='wordcloud'),
     path('recommendation/', RecommendationArticlesAPIView.as_view(), name='qdrant'),
     path('fake-news/<int:article_id>/', FakeNewsAPIView.as_view(), name='fake-news'),
+    path('similar-article/<int:article_id>/', SimilarArticlesAPIView.as_view(), name='similar-article'),
 ]

@@ -282,5 +282,35 @@ class FakeNewsAPIView(APIView):
             results = classify_news_articles_fake_or_not(article_data)
 
             return Response(results, status=status.HTTP_200_OK)
+        
+        return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class SimilarArticlesAPIView(APIView):
+
+    def get(self, request, article_id=None):
+
+        if article_id:
+
+            similar_article_ids = query_similar_articles(article_id, 3)
+
+            if not similar_article_ids:
+                return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
+
+            similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = article_id)
+
+            if similar_articles:
+
+                # Serialize the article data
+                articles_data = ArticleSerializer(similar_articles, many=True).data
+
+                # Return the list of similar articles with complete information
+                return Response(articles_data, status=status.HTTP_200_OK)
+            
+        return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+
 
    
