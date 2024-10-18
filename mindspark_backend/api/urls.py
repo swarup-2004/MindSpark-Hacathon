@@ -17,4 +17,5 @@ urlpatterns = [
     path('recommendation/', RecommendationArticlesAPIView.as_view(), name='qdrant'),
     path('fake-news/<int:article_id>/', FakeNewsAPIView.as_view(), name='fake-news'),
     path('similar-article/<int:article_id>/', SimilarArticlesAPIView.as_view(), name='similar-article'),
+    path('chrome-extension/', ChromeExtensionAPIView.as_view(), name='chrome-extension'),
 ]

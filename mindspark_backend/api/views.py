@@ -19,6 +19,7 @@ from .news_utils import *
 from datetime import datetime, timezone, timedelta
 from collections import Counter
 from django.db.models import Case, When
+from rest_framework.permissions import AllowAny
 
 
 from .qdrant_utils import *
@@ -397,7 +398,56 @@ class SimilarArticlesAPIView(APIView):
             
         return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
             
+
+
+
+class ChromeExtensionAPIView(APIView):
+
+    authentication_classes = []  
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        url = request.query_params.get('url', None)
+
+        print(url)
+        if url:
             
+            # Fetch the full article content based on the provided URL
+            article_data = fetch_full_article(url)
 
+            # Perform sentiment analysis on the article
+            sentiment = analyze_sentiment(article_data)
 
-   
+            # Generate a summary for the article
+            summary = generate_summary(article_data)
+
+            positive = 0
+            negative = 0
+            count = 0
+
+            # Iterate through sentiment analysis results
+            if sentiment:
+                for val in sentiment:
+                    count += 1
+                    print(val.get("label"))  # Debug print to view sentiment labels
+                    if val.get("label") == "POSITIVE":
+                        positive += 1
+                    else:
+                        negative += 1
+
+            sentiment_results = {}
+
+            # Calculate positive sentiment percentage
+            if positive != 0 and count != 0:
+                sentiment_results["positive"] = positive / float(count)
+
+            # Calculate negative sentiment percentage
+            if negative != 0 and count != 0:
+                sentiment_results["negative"] = negative / float(count)
+
+            # Return sentiment and summary data
+            return Response({"sentiment": sentiment_results, "summary": summary}, status=status.HTTP_200_OK)
+
+        # Handle case where no URL is provided
+        return Response({"error": "Invalid URL"}, status=status.HTTP_400_BAD_REQUEST)
