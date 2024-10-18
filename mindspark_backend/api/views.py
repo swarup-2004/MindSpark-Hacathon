@@ -196,7 +196,7 @@ class SummaryAPIView(APIView):
             return Response({"error": "Article not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Generate summary for the article
-        summary = generate_summary(article)
+        summary = generate_summary(article.full_content)
 
         # Return the summary with a 200 OK status
         return Response({"summary": summary}, status=status.HTTP_200_OK)
