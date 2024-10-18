@@ -57,11 +57,22 @@ class ReviewViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
 
+        setinment = 0
+        sentiment_result = analyze_sentiment(request.data.get("feedback"))
+
+        if (len(sentiment_result) == 1):
+            if sentiment_result[0].get("label") == "NEGATIVE":
+                sentiment = -1
+            
+            elif sentiment_result[0].get("label") == "POSITIVE":
+                sentiment = 1
+
         data = { 
             "user": request.user.id, 
             "feedback": request.data.get("feedback"),
             "rating": request.data.get("rating"),
             "article": request.data.get("article"),
+            "sentiment": sentiment,
         }
 
         serializer = self.get_serializer(data=data)
@@ -194,12 +205,12 @@ class SentimentAnalysisAPIView(APIView):
     def get(self, request, article_id):
         # Retrieve the article by ID
         try:
-            article = Article.objects.get(id=article_id)
+            article_full_content = Article.objects.get(id=article_id).full_content
         except Article.DoesNotExist:
             return Response({"error": "Article not found."}, status=404)
 
         # Analyze sentiment
-        sentiment = analyze_sentiment(article)
+        sentiment = analyze_sentiment(article_full_content)
 
         positive = 0
         negative = 0
@@ -219,7 +230,7 @@ class SentimentAnalysisAPIView(APIView):
 
 
 class WordCloudAPIView(APIView):
-    def get(self, request, article_id):
+    def get(self, request, article_id=None):
         # Retrieve the article by ID
         try:
             article = Article.objects.get(id=article_id)
@@ -259,4 +270,17 @@ class RecommendationArticlesAPIView(APIView):
             return Response(articles_data, status=status.HTTP_200_OK)
         
         return Response({"message": "Visit more articles"}, status=status.HTTP_200_OK)
+    
+
+class FakeNewsAPIView(APIView):
+
+    def get(self, request, article_id=None):
+
+        if article_id:
+            article_data = Article.objects.get(id=article_id).full_content
+
+            results = classify_news_articles_fake_or_not(article_data)
+
+            return Response(results, status=status.HTTP_200_OK)
+
    

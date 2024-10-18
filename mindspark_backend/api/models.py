@@ -20,7 +20,7 @@ class CustomUser(AbstractUser):
         blank=True,
     )
     def __str__(self):
-        return self.first_name + self.last_name
+        return self.first_name + " " + self.last_name
     
 class Article(models.Model):
     source = models.CharField(max_length=255)
@@ -46,6 +46,7 @@ class Bookmark(models.Model):
     def __str__(self):
         return f"{self.user} - {self.article.title}"
 
+
 class Review(models.Model):
     class Rating(models.IntegerChoices):
         ONE = 1, '1 - Very Poor'
@@ -53,15 +54,22 @@ class Review(models.Model):
         THREE = 3, '3 - Average'
         FOUR = 4, '4 - Good'
         FIVE = 5, '5 - Excellent'
-    
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-    rating = models.IntegerField(choices=Rating.choices)
+
+    class Sentiment(models.IntegerChoices):
+        NEGATIVE = -1, '-1 - Negative'
+        NEUTRAL = 0, '0 - Neutral'  
+        POSITIVE = 1, '1 - Positive'
+
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE) 
+    article = models.ForeignKey('Article', on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=Rating.choices, default=Rating.THREE) 
     feedback = models.TextField(default="")
     timestamp = models.DateTimeField(auto_now_add=True)
+    sentiment = models.IntegerField(choices=Sentiment.choices, default=Sentiment.NEUTRAL)
 
     def __str__(self):
         return f"{self.user} - {self.rating}"
+
     
 
 class UserActivityLogs(models.Model):

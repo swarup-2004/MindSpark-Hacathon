@@ -35,11 +35,10 @@ def generate_summary(article):
     final_summary = ' '.join(summary)
     return final_summary
 
-def analyze_sentiment(article):
+def analyze_sentiment(full_content):
     # Initialize the sentiment-analysis pipeline
     sentiment_analyzer = pipeline("sentiment-analysis")
 
-    full_content = article.full_content
     
     # Split the content into manageable chunks
     max_input_length = 512
@@ -79,3 +78,52 @@ def generate_word_cloud(article):
 
     # Create an HTTP response with the image
     return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+
+
+
+
+
+# Function to classify news articles as Fake or Not Fake
+def classify_news_articles_fake_or_not(full_content):
+
+    fake_news_classifier = pipeline("text-classification", model="vikram71198/distilroberta-base-finetuned-fake-news-detection")
+    # Map labels
+    label_mapping = {
+        "LABEL_0": "Not Fake News",
+        "LABEL_1": "Fake News"
+    }
+
+    # Split the content into manageable chunks
+    max_input_length = 512
+    chunks = [full_content[i:i + max_input_length] for i in range(0, len(full_content), max_input_length)]
+    
+    # Analyze sentiment for each chunk
+    results = []
+    for chunk in chunks:
+        result = fake_news_classifier(chunk)
+        results.extend(results)
+    
+    
+
+    fake = 0
+    fake_score = 0
+    not_fake = 0
+    not_fake_score = 0
+
+    if results:
+        for val in results:
+            # Label 0 is not fake news
+            if val.get("LABEL_0"):
+                not_fake += 1
+                not_fake_score += val.get("LABEL_0")
+            else:
+                fake += 1
+                fake_score += val.get("LABEL_1")
+
+    
+    if (fake > not_fake):
+        return {"Fake News": float(fake_score) / fake}
+    else:
+        return {"Not Fake News": float(not_fake_score) / not_fake}

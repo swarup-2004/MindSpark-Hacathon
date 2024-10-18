@@ -69,7 +69,7 @@ MIDDLEWARE = [
 
 # Add frontend URL here
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Frontend URL
+    'http://localhost:5174',  # Frontend URL
 ]
 
 CORS_ALLOW_CREDENTIALS = True
