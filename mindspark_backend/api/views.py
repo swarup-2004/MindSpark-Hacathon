@@ -17,6 +17,8 @@ from .utils import *
 import logging
 from .news_utils import *
 from datetime import datetime, timezone, timedelta
+from collections import Counter
+from django.db.models import Case, When
 
 
 from .qdrant_utils import *
@@ -257,36 +259,93 @@ class WordCloudAPIView(APIView):
 
 logger = logging.getLogger(__name__)
 
+
 class RecommendationArticlesAPIView(APIView):
     pagination_class = CustomPageNumberPagination
+
     def get(self, request):
-        # Get the highest-rated review for the current user
-        top_review = Review.objects.filter(user=request.user).order_by("-rating", "-timestamp").first()
+        user = request.user
 
-        if not top_review:
-            return Response({"message": "No reviews found for the user."}, status=status.HTTP_404_NOT_FOUND)
+        # Fetch the top 5 review IDs from the Review model
+        top_review_ids = list(
+            Review.objects.filter(
+                user=user, rating__gte=3, sentiment__gt=0  # Filter on rating and sentiment
+            ).order_by("-rating", "-timestamp").values_list("article__id", flat=True)[:5]
+        )
 
-        # Retrieve similar articles based on the top-rated review's article
-        similar_article_ids = query_similar_articles(top_review.article.id)
+        # Fetch the top 5 search keywords from UserActivityLogs
+        top_search_keywords = list(
+            UserActivityLogs.objects.filter(
+                user=user
+            ).order_by("-count", "-timestamp").values_list("keyword", flat=True)[:5]
+        )
 
-        if not similar_article_ids:
-            return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
+        # If no review or search activity is found
+        if not top_review_ids and not top_search_keywords:
+            return Response(
+                {"message": "No search activity or positive reviews found for the user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-        similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = top_review.article.id)
+        # Initialize a counter for occurrences of articles
+        article_counter = Counter()
 
-        if similar_articles:
-        
+        # 1. Process Feedback (Top Reviews) with 60% weight
+        if top_review_ids:
+            for article_id in top_review_ids:
+                review_article_similar_ids = query_similar_articles(article_id, 4)
+                article_counter.update({article_id: 0.6 for article_id in review_article_similar_ids})
+
+        # 2. Process Search Activity (Top Searches) with 40% weight
+        if top_search_keywords:
+            for keyword in top_search_keywords:
+                search_related_article_ids = similarity_search_using_keyword(keyword, 4)
+                article_counter.update({article_id: 0.4 for article_id in search_related_article_ids})
+
+        # If no similar articles were found from both sources, return a message
+        if not article_counter:
+            return Response(
+                {"message": "No similar articles found based on your search and review activity."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get article IDs sorted by weighted occurrence in descending order
+        sorted_article_ids = [article_id for article_id, count in article_counter.most_common()]
+
+        # Retrieve articles based on the sorted article IDs
+        similar_articles = Article.objects.filter(id__in=sorted_article_ids)
+
+        # Exclude articles that have been rated by the user in top reviews
+        if top_review_ids:
+            similar_articles = similar_articles.exclude(id__in=top_review_ids)
+
+        # Paginate and return the response
+        if similar_articles.exists():
             paginator = PageNumberPagination()
             paginator.page_size = 10  # Set the number of items per page
-            paginated_articles = paginator.paginate_queryset(similar_articles, request)
+
+            # Order articles based on their appearance in the sorted list
+            ordered_articles = similar_articles.filter(id__in=sorted_article_ids).order_by(
+                Case(
+                    *[When(id=article_id, then=pos) for pos, article_id in enumerate(sorted_article_ids)]
+                )
+            )
+
+            paginated_articles = paginator.paginate_queryset(ordered_articles, request)
 
             # Serialize paginated articles
             serializer = ArticleSerializer(paginated_articles, many=True)
 
             # Return paginated response
             return paginator.get_paginated_response(serializer.data)
-        
-        return Response({"message": "Visit more articles"}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"message": "No articles found for your recent activity. Please engage more with the platform."},
+            status=status.HTTP_200_OK
+        )
+
+
+
     
 
 class FakeNewsAPIView(APIView):
