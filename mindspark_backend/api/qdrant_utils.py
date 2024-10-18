@@ -10,7 +10,8 @@ model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 client = QdrantClient("http://localhost:6333")
 
 
-def similarity_search_using_keyword(keyword):
+
+def similarity_search_using_keyword(keyword, limit=20):
     # Create the query string for the keyword
     query_string = f"Give me articles related to the word '{keyword}'"
 
@@ -23,7 +24,7 @@ def similarity_search_using_keyword(keyword):
     response = client.search(
         collection_name="articles",
         query_vector=vector.tolist(),
-        limit=20,  # Limit the number of results
+        limit=limit,  # Limit the number of results
     )
 
     # Extract article IDs from the search results
@@ -97,7 +98,7 @@ def find_similar_keyword(keyword):
 
 
 
-def query_similar_articles(article_id):
+def query_similar_articles(article_id, limit=30):
     
     try:
         # Fetch the article from the database using the provided article_id
@@ -110,7 +111,7 @@ def query_similar_articles(article_id):
         response = client.search(
             collection_name="articles",
             query_vector=vector.tolist(),   # Convert numpy array to list if needed
-            limit=30,  # Limit to 5 results
+            limit=limit,  # Limit to 5 results
             
         )
 

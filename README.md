@@ -72,16 +72,15 @@ from qdrant_client import QdrantClient
 
 client = QdrantClient("http://localhost:6333")
 
-def create_qdrant_collection():
-    collection_name = "articles"
-    # Check if the collection exists
+def create_qdrant_collection(collection_name):
     client.create_collection(
         collection_name=collection_name,
         vectors_config={"size": 384, "distance": "Cosine"}  # Adjust the vector size as per your model
     )
     print(f"Collection '{collection_name}' created.")
 
-create_qdrant_collection()
+create_qdrant_collection("articles")
+create_qdrant_collection("keywords")
 ```
 
 ### 5. Configure the MySQL Database
@@ -122,7 +121,31 @@ Create a superuser for the Django admin interface:
 python manage.py createsuperuser
 ```
 
-### 8. Run the Server
+### 8. Update `CORS_ALLOWED_ORIGINS` 
+In your `settings.py` file, update the `CORS_ALLOWED_ORIGINS` setting to include the URL of your frontend application. This ensures that cross-origin requests from your frontend to the backend are allowed.
+
+```python
+CORS_ALLOWED_ORIGINS = [
+    'http://your-frontend-url.com',  # Replace with your actual frontend URL
+]
+```
+
+This setting ensures that only the specified frontend domain is allowed to interact with your backend via cross-origin requests.
+
+---
+
+### 9. Update "domain" and "name" in the `django_site` Table
+In your database, specifically the `django_site` table, update the following fields:
+
+- **`domain`**: Set this to your frontend domain.
+- **`name`**: Set this to your application's name.
+
+You can do this either by:
+1. Accessing the `django_site` table directly in your database and updating the fields manually.
+2. Using the Django admin panel, which can be accessed after running the server.
+
+
+### 10. Run the Server
 
 Start the Django development server:
 

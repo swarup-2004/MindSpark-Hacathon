@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import UserRateThrottle
 from rest_framework import generics
 from qdrant_client.http.exceptions import UnexpectedResponse
+from rest_framework.pagination import PageNumberPagination
 from django.db import DatabaseError
 from django.contrib.auth import get_user_model
 from .serializers import *
@@ -16,6 +17,9 @@ from .utils import *
 import logging
 from .news_utils import *
 from datetime import datetime, timezone, timedelta
+from collections import Counter
+from django.db.models import Case, When
+from rest_framework.permissions import AllowAny
 
 
 from .qdrant_utils import *
@@ -28,6 +32,11 @@ class UserRegistrationView(generics.CreateAPIView):
 
 
 class BookmarkViewSet(viewsets.ModelViewSet):
+    filter_backends = [filters.SearchFilter]
+    search_fields =  ['id', 'user', 'article']
+    # ordering_fields=['title']
+    pagination_class = CustomPageNumberPagination
+    
     serializer_class = BookmarkSerializer
 
     def get_queryset(self):
@@ -51,6 +60,12 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     
 
 class ReviewViewSet(viewsets.ModelViewSet):
+
+    filter_backends = [filters.SearchFilter]
+    search_fields =  ['id', 'user', 'rating', 'feedback', 'article', 'sentiment']
+    # ordering_fields=['title']
+    pagination_class = CustomPageNumberPagination
+
     serializer_class = ReviewSerializer
     def get_queryset(self):
         return Review.objects.filter(user=self.request.user)
@@ -247,34 +262,98 @@ class WordCloudAPIView(APIView):
 
 logger = logging.getLogger(__name__)
 
+
 class RecommendationArticlesAPIView(APIView):
+    pagination_class = CustomPageNumberPagination
+
     def get(self, request):
-        # Get the highest-rated review for the current user
-        top_review = Review.objects.filter(user=request.user).order_by("-rating", "-timestamp").first()
+        user = request.user
 
-        if not top_review:
-            return Response({"message": "No reviews found for the user."}, status=status.HTTP_404_NOT_FOUND)
+        # Fetch the top 5 review IDs from the Review model
+        top_review_ids = list(
+            Review.objects.filter(
+                user=user, rating__gte=3, sentiment__gt=0  # Filter on rating and sentiment
+            ).order_by("-rating", "-timestamp").values_list("article__id", flat=True)[:5]
+        )
 
-        # Retrieve similar articles based on the top-rated review's article
-        similar_article_ids = query_similar_articles(top_review.article.id)
+        # Fetch the top 5 search keywords from UserActivityLogs
+        top_search_keywords = list(
+            UserActivityLogs.objects.filter(
+                user=user
+            ).order_by("-count", "-timestamp").values_list("keyword", flat=True)[:5]
+        )
 
-        if not similar_article_ids:
-            return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
+        # If no review or search activity is found
+        if not top_review_ids and not top_search_keywords:
+            return Response(
+                {"message": "No search activity or positive reviews found for the user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-        similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = top_review.article.id)
+        # Initialize a counter for occurrences of articles
+        article_counter = Counter()
 
-        if similar_articles:
+        # 1. Process Feedback (Top Reviews) with 60% weight
+        if top_review_ids:
+            for article_id in top_review_ids:
+                review_article_similar_ids = query_similar_articles(article_id, 4)
+                article_counter.update({article_id: 0.6 for article_id in review_article_similar_ids})
 
-            # Serialize the article data
-            articles_data = ArticleSerializer(similar_articles, many=True).data
+        # 2. Process Search Activity (Top Searches) with 40% weight
+        if top_search_keywords:
+            for keyword in top_search_keywords:
+                search_related_article_ids = similarity_search_using_keyword(keyword, 4)
+                article_counter.update({article_id: 0.4 for article_id in search_related_article_ids})
 
-            # Return the list of similar articles with complete information
-            return Response(articles_data, status=status.HTTP_200_OK)
-        
-        return Response({"message": "Visit more articles"}, status=status.HTTP_200_OK)
+        # If no similar articles were found from both sources, return a message
+        if not article_counter:
+            return Response(
+                {"message": "No similar articles found based on your search and review activity."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get article IDs sorted by weighted occurrence in descending order
+        sorted_article_ids = [article_id for article_id, count in article_counter.most_common()]
+
+        # Retrieve articles based on the sorted article IDs
+        similar_articles = Article.objects.filter(id__in=sorted_article_ids)
+
+        # Exclude articles that have been rated by the user in top reviews
+        if top_review_ids:
+            similar_articles = similar_articles.exclude(id__in=top_review_ids)
+
+        # Paginate and return the response
+        if similar_articles.exists():
+            paginator = PageNumberPagination()
+            paginator.page_size = 10  # Set the number of items per page
+
+            # Order articles based on their appearance in the sorted list
+            ordered_articles = similar_articles.filter(id__in=sorted_article_ids).order_by(
+                Case(
+                    *[When(id=article_id, then=pos) for pos, article_id in enumerate(sorted_article_ids)]
+                )
+            )
+
+            paginated_articles = paginator.paginate_queryset(ordered_articles, request)
+
+            # Serialize paginated articles
+            serializer = ArticleSerializer(paginated_articles, many=True)
+
+            # Return paginated response
+            return paginator.get_paginated_response(serializer.data)
+
+        return Response(
+            {"message": "No articles found for your recent activity. Please engage more with the platform."},
+            status=status.HTTP_200_OK
+        )
+
+
+
     
 
 class FakeNewsAPIView(APIView):
+
+    
 
     def get(self, request, article_id=None):
 
@@ -284,5 +363,93 @@ class FakeNewsAPIView(APIView):
             results = classify_news_articles_fake_or_not(article_data)
 
             return Response(results, status=status.HTTP_200_OK)
+        
+        return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
+        
 
-   
+
+class SimilarArticlesAPIView(APIView):
+
+    pagination_class = CustomPageNumberPagination
+
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, article_id=None):
+
+        if article_id:
+
+            similar_article_ids = query_similar_articles(article_id, 3)
+
+            if not similar_article_ids:
+                return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
+
+            similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = article_id)
+
+            if similar_articles:
+
+
+                paginator = PageNumberPagination()
+                paginator.page_size = 10  # Set the number of items per page
+                paginated_articles = paginator.paginate_queryset(similar_articles, request)
+
+                # Serialize paginated articles
+                serializer = ArticleSerializer(paginated_articles, many=True)
+
+                # Return paginated response
+                return paginator.get_paginated_response(serializer.data)
+            
+        return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
+            
+
+
+
+class ChromeExtensionAPIView(APIView):
+
+    authentication_classes = []  
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        url = request.query_params.get('url', None)
+
+        print(url)
+        if url:
+            
+            # Fetch the full article content based on the provided URL
+            article_data = fetch_full_article(url)
+
+            # Perform sentiment analysis on the article
+            sentiment = analyze_sentiment(article_data)
+
+            # Generate a summary for the article
+            summary = generate_summary(article_data)
+
+            positive = 0
+            negative = 0
+            count = 0
+
+            # Iterate through sentiment analysis results
+            if sentiment:
+                for val in sentiment:
+                    count += 1
+                    print(val.get("label"))  # Debug print to view sentiment labels
+                    if val.get("label") == "POSITIVE":
+                        positive += 1
+                    else:
+                        negative += 1
+
+            sentiment_results = {}
+
+            # Calculate positive sentiment percentage
+            if positive != 0 and count != 0:
+                sentiment_results["positive"] = positive / float(count)
+
+            # Calculate negative sentiment percentage
+            if negative != 0 and count != 0:
+                sentiment_results["negative"] = negative / float(count)
+
+            # Return sentiment and summary data
+            return Response({"sentiment": sentiment_results, "summary": summary}, status=status.HTTP_200_OK)
+
+        # Handle case where no URL is provided
+        return Response({"error": "Invalid URL"}, status=status.HTTP_400_BAD_REQUEST)
