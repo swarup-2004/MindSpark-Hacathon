@@ -4,6 +4,10 @@ from wordcloud import WordCloud
 import io
 from django.http import HttpResponse
 
+import matplotlib
+matplotlib.use('Agg') 
+
+
 def generate_summary(article):
     # Initialize the summarization pipeline
     summarizer = pipeline("summarization")
@@ -60,16 +64,16 @@ def generate_word_cloud(article):
 
     # Create a BytesIO buffer to save the image
     buffer = io.BytesIO()
-    
+
     # Plot the word cloud
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')  # Turn off axis numbers and ticks
-    
+
     # Save the figure to the buffer
     plt.savefig(buffer, format='png')
     plt.close()  # Close the figure to avoid display in Jupyter notebook
-    
+
     # Move the buffer cursor to the beginning
     buffer.seek(0)
 
