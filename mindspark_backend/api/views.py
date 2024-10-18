@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import UserRateThrottle
 from rest_framework import generics
 from qdrant_client.http.exceptions import UnexpectedResponse
+from rest_framework.pagination import PageNumberPagination
 from django.db import DatabaseError
 from django.contrib.auth import get_user_model
 from .serializers import *
@@ -28,6 +29,11 @@ class UserRegistrationView(generics.CreateAPIView):
 
 
 class BookmarkViewSet(viewsets.ModelViewSet):
+    filter_backends = [filters.SearchFilter]
+    search_fields =  ['id', 'user', 'article']
+    # ordering_fields=['title']
+    pagination_class = CustomPageNumberPagination
+    
     serializer_class = BookmarkSerializer
 
     def get_queryset(self):
@@ -51,6 +57,12 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     
 
 class ReviewViewSet(viewsets.ModelViewSet):
+
+    filter_backends = [filters.SearchFilter]
+    search_fields =  ['id', 'user', 'rating', 'feedback', 'article', 'sentiment']
+    # ordering_fields=['title']
+    pagination_class = CustomPageNumberPagination
+
     serializer_class = ReviewSerializer
     def get_queryset(self):
         return Review.objects.filter(user=self.request.user)
@@ -246,6 +258,7 @@ class WordCloudAPIView(APIView):
 logger = logging.getLogger(__name__)
 
 class RecommendationArticlesAPIView(APIView):
+    pagination_class = CustomPageNumberPagination
     def get(self, request):
         # Get the highest-rated review for the current user
         top_review = Review.objects.filter(user=request.user).order_by("-rating", "-timestamp").first()
@@ -262,17 +275,23 @@ class RecommendationArticlesAPIView(APIView):
         similar_articles = Article.objects.filter(id__in=similar_article_ids).exclude(id = top_review.article.id)
 
         if similar_articles:
+        
+            paginator = PageNumberPagination()
+            paginator.page_size = 10  # Set the number of items per page
+            paginated_articles = paginator.paginate_queryset(similar_articles, request)
 
-            # Serialize the article data
-            articles_data = ArticleSerializer(similar_articles, many=True).data
+            # Serialize paginated articles
+            serializer = ArticleSerializer(paginated_articles, many=True)
 
-            # Return the list of similar articles with complete information
-            return Response(articles_data, status=status.HTTP_200_OK)
+            # Return paginated response
+            return paginator.get_paginated_response(serializer.data)
         
         return Response({"message": "Visit more articles"}, status=status.HTTP_200_OK)
     
 
 class FakeNewsAPIView(APIView):
+
+    
 
     def get(self, request, article_id=None):
 
@@ -289,6 +308,10 @@ class FakeNewsAPIView(APIView):
 
 class SimilarArticlesAPIView(APIView):
 
+    pagination_class = CustomPageNumberPagination
+
+    # permission_classes = [IsAuthenticated]
+
     def get(self, request, article_id=None):
 
         if article_id:
@@ -302,11 +325,16 @@ class SimilarArticlesAPIView(APIView):
 
             if similar_articles:
 
-                # Serialize the article data
-                articles_data = ArticleSerializer(similar_articles, many=True).data
 
-                # Return the list of similar articles with complete information
-                return Response(articles_data, status=status.HTTP_200_OK)
+                paginator = PageNumberPagination()
+                paginator.page_size = 10  # Set the number of items per page
+                paginated_articles = paginator.paginate_queryset(similar_articles, request)
+
+                # Serialize paginated articles
+                serializer = ArticleSerializer(paginated_articles, many=True)
+
+                # Return paginated response
+                return paginator.get_paginated_response(serializer.data)
             
         return Response({"message": "bad request"}, status=status.HTTP_400_BAD_REQUEST)
             
