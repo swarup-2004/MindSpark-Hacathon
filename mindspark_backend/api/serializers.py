@@ -47,11 +47,13 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class BookmarkSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
-    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
+    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all()) 
+    title = serializers.CharField(source='article.title', read_only=True) 
+    url = serializers.CharField(source='article.url', read_only=True)
 
     class Meta:
         model = Bookmark
-        fields = ['id', 'user', 'article']
+        fields = ['id', 'user', 'article', 'title', 'url']
 
     
 
