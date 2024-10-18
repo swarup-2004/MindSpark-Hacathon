@@ -15,4 +15,5 @@ urlpatterns = [
     path('sentiment-analysis/<int:article_id>/', SentimentAnalysisAPIView.as_view(), name='sentiment-analysis'),
     path('wordcloud/<int:article_id>/', WordCloudAPIView.as_view(), name='wordcloud'),
     path('recommendation/', RecommendationArticlesAPIView.as_view(), name='qdrant'),
+    path('fake-news/<int:article_id>/', FakeNewsAPIView.as_view(), name='fake-news'),
 ]

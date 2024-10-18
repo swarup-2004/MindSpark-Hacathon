@@ -8,12 +8,9 @@ import matplotlib
 matplotlib.use('Agg') 
 
 
-def generate_summary(article):
+def generate_summary(full_content):
     # Initialize the summarization pipeline
     summarizer = pipeline("summarization")
-
-    # Get the full content of the article
-    full_content = article.full_content
 
     # Set the max input length for the summarization model
     max_input_length = 1024  # Adjust this based on your model's capabilities
@@ -87,8 +84,11 @@ def generate_word_cloud(article):
 
 # Function to classify news articles as Fake or Not Fake
 def classify_news_articles_fake_or_not(full_content):
+    # Assume you have a generate_summary function that summarizes the content
+    # full_content = generate_summary(full_content)
 
     fake_news_classifier = pipeline("text-classification", model="vikram71198/distilroberta-base-finetuned-fake-news-detection")
+    
     # Map labels
     label_mapping = {
         "LABEL_0": "Not Fake News",
@@ -99,31 +99,40 @@ def classify_news_articles_fake_or_not(full_content):
     max_input_length = 512
     chunks = [full_content[i:i + max_input_length] for i in range(0, len(full_content), max_input_length)]
     
-    # Analyze sentiment for each chunk
+    # Analyze fake news detection for each chunk
     results = []
     for chunk in chunks:
         result = fake_news_classifier(chunk)
-        results.extend(results)
+        results.extend(result)  # Append the result to the results list
     
-    
-
+    # Initialize counters
     fake = 0
     fake_score = 0
     not_fake = 0
     not_fake_score = 0
 
+    # Debugging output
+    # print(results)
+
+    # Process results
     if results:
         for val in results:
-            # Label 0 is not fake news
-            if val.get("LABEL_0"):
+            # Check the label and update counters
+            if val['label'] == "LABEL_0":
                 not_fake += 1
-                not_fake_score += val.get("LABEL_0")
+                not_fake_score += val['score']
             else:
                 fake += 1
-                fake_score += val.get("LABEL_1")
+                fake_score += val['score']
 
+    # Debugging output for counters
+    # print(fake, fake_score, not_fake, not_fake_score)
     
-    if (fake > not_fake):
+    # Determine if content is fake or not based on the results
+    if fake > not_fake and fake != 0:
         return {"Fake News": float(fake_score) / fake}
-    else:
+    elif not_fake != 0:
         return {"Not Fake News": float(not_fake_score) / not_fake}
+    else:
+        return {"Not Fake News": 98.5}  # Default case
+
