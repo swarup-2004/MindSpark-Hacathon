@@ -66,3 +66,15 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user', 'rating', 'feedback', 'article']
 
+
+class UserActivityLogsSerializer(serializers.ModelField):
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+
+    class Meta:
+        model = UserActivityLogs
+        fields = ['id', 'user', 'keyword', 'count']
+        extra_kwargs = {
+            'count': {'required': False, 'allow_blank': True}, 
+            
+        }
+

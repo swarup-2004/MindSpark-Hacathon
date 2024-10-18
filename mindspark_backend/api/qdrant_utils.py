@@ -3,11 +3,99 @@ from sentence_transformers import SentenceTransformer
 from .models import Article  # Assuming you're working with an Article model
 from qdrant_client.http.models import Filter, SearchRequest
 from sentence_transformers import SentenceTransformer
-from .models import Article  # Assuming you have the Article model
+from .models import Article, UserActivityLogs  # Assuming you have the Article model
 
 # Load the model again (if not already loaded)
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 client = QdrantClient("http://localhost:6333")
+
+
+def similarity_search_using_keyword(keyword):
+    # Create the query string for the keyword
+    query_string = f"Give me articles related to the word '{keyword}'"
+
+    print(keyword)
+    
+    # Encode the query string into a vector
+    vector = model.encode(query_string)
+
+    # Query Qdrant to find the most similar articles
+    response = client.search(
+        collection_name="articles",
+        query_vector=vector.tolist(),
+        limit=20,  # Limit the number of results
+    )
+
+    # Extract article IDs from the search results
+    similar_article_ids = [result.payload.get("id") for result in response]
+    print(similar_article_ids)
+
+    return similar_article_ids
+
+
+
+
+
+def add_keyword(keyword_id):
+    # Retrieve the keyword from your Django model
+    keyword = UserActivityLogs.objects.get(id=keyword_id)
+
+    # Encode the keyword to get its vector representation
+    vector = model.encode(keyword.keyword)
+
+    # Prepare the payload, associating it with the keyword id
+    payload = [
+        {
+            "id": keyword_id,
+            "keyword": keyword.keyword
+        }
+    ]
+
+    # Upload the single vector and its associated payload to the "keywords" collection in Qdrant
+    client.upload_collection(
+        collection_name="keywords",
+        vectors=[vector.tolist()],  # Ensure vector is a list of floats and wrapped inside a list
+        payload=payload  # Payload must also be wrapped in a list
+    )
+    
+    print(f"Keyword '{keyword.keyword}' added to Qdrant with ID {keyword_id}.")
+
+
+    
+
+
+
+
+def find_similar_keyword(keyword):
+    # Convert keyword to vector
+    try:
+        vector = model.encode(keyword)
+    except Exception as e:
+        print(f"Error encoding keyword '{keyword}': {e}")
+        return {"id": None, "score": 0}
+
+    try:
+        # Query Qdrant for the most similar keyword
+        response = client.search(
+            collection_name="keywords",
+            query_vector=vector.tolist(),  # Convert numpy array to list if necessary
+            limit=1  # Fetch only the most similar result
+        )
+        
+        if response and len(response) > 0:  # Ensure there is a valid response
+            result = response[0]
+            return {
+                "id": result.payload.get("id"),
+                "score": result.score
+            }
+    except Exception as e:
+        print(f"Error querying Qdrant: {e}")
+
+    # Return default result if no match is found
+    return {"id": None, "score": 0}
+
+
+
 
 def query_similar_articles(article_id):
     

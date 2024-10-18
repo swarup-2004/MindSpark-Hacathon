@@ -64,6 +64,13 @@ class Review(models.Model):
         return f"{self.user} - {self.rating}"
     
 
+class UserActivityLogs(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    keyword = models.CharField(max_length=255)
+    count = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+
 
 
 

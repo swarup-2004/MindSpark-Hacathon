@@ -15,6 +15,8 @@ from rest_framework.views import APIView
 from .utils import *
 import logging
 from .news_utils import *
+from datetime import datetime, timezone, timedelta
+
 
 from .qdrant_utils import *
 
@@ -79,6 +81,64 @@ class ArticleViewSet(viewsets.ModelViewSet):
     search_fields = ['source', 'author', 'title', 'description', 'url', 'category', 'full_content']
     ordering_fields=['title']
     pagination_class = CustomPageNumberPagination
+
+
+    def list(self, request, *args, **kwargs):
+        # Get query parameters for search
+        query_params = request.query_params.get('search', None)
+        
+        # Check if there is a search query and log the user's activity
+        if query_params:
+            keywords = query_params.split('+')
+
+            print(keywords)
+
+            for keyword in keywords:
+                # Finding the similar keyword in the vector db
+                result = find_similar_keyword(keyword)
+
+                print(result)
+
+                if result.get("score") > 0.70:
+                    # If similar keyword exists, update it
+                    similar_keyword = UserActivityLogs.objects.get(id=result.get("id"))
+                    similar_keyword.count += 1
+                    # Define an IST (Indian Standard Time) offset (UTC+5:30)
+                    ist_offset = timedelta(hours=5, minutes=30)
+                    ist_timezone = timezone(ist_offset)
+
+                    # Get the current time in IST
+                    now_ist = datetime.now(ist_timezone)
+                    similar_keyword.timestamp = now_ist
+                    similar_keyword.save()
+
+                else:
+                    # If similar keyword is not present, add it in the SQL database
+                    new_keyword = UserActivityLogs.objects.create(
+                        user=request.user if request.user.is_authenticated else None,
+                        keyword=keyword,
+                        count=1
+                    )
+                    add_keyword(new_keyword.id)
+
+            # Capture similar articles
+            similar_article_ids = similarity_search_using_keyword(query_params)
+
+            if not similar_article_ids:
+                return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
+
+            similar_articles = Article.objects.filter(id__in=similar_article_ids)
+
+            if similar_articles:
+                # Serialize the article data
+                articles_data = ArticleSerializer(similar_articles, many=True).data
+
+                # Return the list of similar articles
+                return Response(articles_data, status=status.HTTP_200_OK)
+
+        # Proceed with the regular GET request functionality (list view)
+        return super().list(request, *args, **kwargs)
+
 
 
     def create(self, request, *args, **kwargs):
