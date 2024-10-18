@@ -72,16 +72,15 @@ from qdrant_client import QdrantClient
 
 client = QdrantClient("http://localhost:6333")
 
-def create_qdrant_collection():
-    collection_name = "articles"
-    # Check if the collection exists
+def create_qdrant_collection(collection_name):
     client.create_collection(
         collection_name=collection_name,
         vectors_config={"size": 384, "distance": "Cosine"}  # Adjust the vector size as per your model
     )
     print(f"Collection '{collection_name}' created.")
 
-create_qdrant_collection()
+create_qdrant_collection("articles")
+create_qdrant_collection("keywords")
 ```
 
 ### 5. Configure the MySQL Database
