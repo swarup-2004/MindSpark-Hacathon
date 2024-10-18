@@ -153,16 +153,6 @@ Start the Django development server:
 python manage.py runserver
 ```
 
-
-
-
-
-Start the Django development server:
-
-```bash
-python manage.py runserver
-```
-
 ### 9. Setup frontend
 
 Navigate to the frontend directory, run the following command:
