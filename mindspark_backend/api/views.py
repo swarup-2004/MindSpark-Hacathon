@@ -103,6 +103,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
     serializer_class = ArticleSerializer
     queryset = Article.objects.all().order_by('-published_at')
 
+    permission_classes = []
+
     filter_backends = [filters.SearchFilter]
     search_fields = ['source', 'author', 'title', 'description', 'url', 'category', 'full_content']
     ordering_fields=['title']

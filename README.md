@@ -49,19 +49,31 @@ Install the required packages:
 pip install -r requirements.txt
 ```
 
-### 4. Configure Qdrant Vector Database
+To configure Qdrant and store collections on the local disk when running it via Docker, you can follow these updated steps:
 
-#### Pull the Docker Image from Docker Hub:
+### 4. Configure Qdrant Vector Database with Local Storage
+
+### Pull the Qdrant Docker Image from Docker Hub
 
 ```bash
 docker pull qdrant/qdrant
 ```
 
-#### Run the Qdrant Docker Image:
+#### Run the Qdrant Docker Image with Local Disk Storage
+
+To store the Qdrant collection data on your local disk, map a local directory to a directory inside the Docker container.
 
 ```bash
-docker run -p 6333:6333 qdrant/qdrant
+docker run -p 6333:6333 \
+  -v /path/to/local/storage:/qdrant/storage \
+  qdrant/qdrant
 ```
+
+In the command above:
+
+- Replace `/path/to/local/storage` with the actual path where you want to store the Qdrant collections on your local machine. For example, `C:\Users\YourName\Documents\QdrantData` on Windows or `/home/yourname/qdrant_data` on Linux/macOS.
+- The `-v` option mounts the specified local directory to `/qdrant/storage` inside the Docker container, which is the default storage path for Qdrant.
+
 
 #### Create a Collection:
 
