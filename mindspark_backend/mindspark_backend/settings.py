@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     "auth_blacklist",
     'django.contrib.sites',
     'corsheaders',
+    'django_celery_results',
+    'django_celery_beat',
 ]
 
 SITE_ID = 2
@@ -223,3 +225,16 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'TOKEN_BLACKLIST': True
 }
+
+
+
+# Use Redis as the broker
+CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}/0'
+
+# Use Django database as the result backend
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'

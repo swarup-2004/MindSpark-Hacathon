@@ -38,7 +38,7 @@ def fetch_defense_news(keywords=None):
         'sortBy': 'relevancy',  # Order by relevancy
         'apiKey': API_KEY,
         'language': 'en',  
-        'pageSize': 100,
+        'pageSize': 1,
     }
     
     # Make the request to News API
