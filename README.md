@@ -34,7 +34,7 @@ Ensure that you have the following installed:
 - **virtualenv** (optional but recommended)
 - **Docker** (for Qdrant)
 - **MySQL** (for the database)
-- **Node** (for the frontend)
+
 
 ### 1. Clone the Repository
 
