@@ -184,16 +184,6 @@ Start the Django development server:
 python manage.py runserver
 ```
 
-
-
-### 8. Run the Server
-
-Start the React server:
-
-```bash
-npm run dev
-```
-
 ## Additional Notes
 
 - Ensure that you have Docker installed and running on your machine to pull and run the Qdrant image.
