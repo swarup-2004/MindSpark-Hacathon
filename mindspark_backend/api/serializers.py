@@ -47,14 +47,19 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class BookmarkSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
-    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all()) 
-    title = serializers.CharField(source='article.title', read_only=True) 
-    url = serializers.CharField(source='article.url', read_only=True)
+    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())  # For POST requests
 
     class Meta:
         model = Bookmark
-        fields = ['id', 'user', 'article', 'title', 'url']
+        fields = ['id', 'user', 'article']
 
+    def create(self, validated_data):
+        return Bookmark.objects.create(**validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['article'] = ArticleSerializer(instance.article).data  # Serialize the article
+        return representation
     
 
 
