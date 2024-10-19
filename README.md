@@ -1,3 +1,22 @@
+## Repositories and Resources
+
+### Backend Repository
+- **Link**: [NeuralKnights Gold Root Backend](https://github.com/swarup-2004/NeuralKnights-Gold-Root-Backend-.git)
+
+### Frontend Repository
+- **Link**: [NeuralKnights Gold Frontend](https://github.com/Virucodes/NeuralKnights-Gold-Front-end.git)
+
+### Chrome Extension Repository
+- **Link**: [NeuralKnights Gold Chrome Extension](https://github.com/Virucodes/NeuralKnights-Gold-Chrome-Extension.git)
+
+### Dataset
+- **Link**: [Global News Dataset (Kaggle)](https://www.kaggle.com/datasets/everydaycodings/global-news-dataset)
+
+# Web Portal Video Link:
+# Chrome Extension Video Link:  
+
+
+
 # Tactical Trends Backend
 
 
@@ -165,21 +184,7 @@ Start the Django development server:
 python manage.py runserver
 ```
 
-### 9. Setup frontend
 
-Navigate to the frontend directory, run the following command:
-
-```bash
-cd frontend
-```
-
-### 9. Install Dependencies
-
-Install the required packages:
-
-```bash
-npm i
-```
 
 ### 8. Run the Server
 
