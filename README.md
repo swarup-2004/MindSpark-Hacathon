@@ -12,8 +12,8 @@
 ### Dataset
 - **Link**: [Global News Dataset (Kaggle)](https://www.kaggle.com/datasets/everydaycodings/global-news-dataset)
 
-# Web Portal Video Link:
-# Chrome Extension Video Link:  
+### Video Demonstration
+- **Link**: [Video Demonstration](https://drive.google.com/drive/u/0/folders/12t7KkhVDguAjan5X3yJU1on1dDn53lhy)
 
 
 
