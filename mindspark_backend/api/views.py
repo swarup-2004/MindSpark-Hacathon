@@ -153,7 +153,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             if not similar_article_ids:
                 return Response({"message": "No similar articles found."}, status=status.HTTP_404_NOT_FOUND)
 
-            similar_articles = Article.objects.filter(id__in=similar_article_ids)
+            similar_articles = Article.objects.filter(id__in=similar_article_ids).order_by('-published_at')
 
             if similar_articles:
                 # Serialize the article data
@@ -170,6 +170,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         
         articles_data = fetch_defense_news(request.data.get("keywords"))
+
+        print(articles_data)
 
         if articles_data:
             for article_data in articles_data.get('articles', []):

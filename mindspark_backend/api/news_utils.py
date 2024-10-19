@@ -28,20 +28,23 @@ def fetch_defense_news(keywords=None):
     base_url = "https://newsapi.org/v2/everything"
     
     # Define default defense-related search terms
-    keywords = "defense OR military OR security OR geopolitics OR strategy OR international relations OR 'national security' OR 'foreign policy'"
+   
+    keywords = "international affairs"
     
     # Set the request parameters
     params = {
         'q': keywords,  # Search query
-        'from': (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'),
+        'from': (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d'),
         'sortBy': 'relevancy',  # Order by relevancy
         'apiKey': API_KEY,
         'language': 'en',  
-        'pageSize': 5,# Restrict to English articles
+        'pageSize': 100,
     }
     
     # Make the request to News API
     response = requests.get(base_url, params=params)
+
+    print(response)
 
     # print(response.json())
     
